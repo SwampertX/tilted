@@ -1,0 +1,206 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Making your first Phaser 3 Game - Part 1</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+    var config = {
+        type: Phaser.AUTO,
+        width: 1800,
+        height: 1800,
+         physics: {
+        default: 'arcade',
+            arcade: {
+                gravity: { y: 0 },
+                debug: false
+            }
+        },
+        scene: {
+            preload: preload,
+            create: create,
+            update: update
+        }
+    };
+
+    var game = new Phaser.Game(config);
+    var player;
+    var previouskey;
+    var enemy;
+    var boltappear;
+
+    function preload ()
+    {
+        this.load.image('tiles', 'wall_sheet.png');
+        // this.load.image('heart', 'heartshield.tsx' )
+        this.load.tilemapTiledJSON('level1', 'map.json');
+        this.load.spritesheet('dudedown', 'assets/georgedown.png', { frameWidth: 48, frameHeight: 48 });
+        this.load.spritesheet('dudeleft', 'assets/georgeleft.png', { frameWidth: 48, frameHeight: 48 });
+        this.load.spritesheet('dudeup', 'assets/georgeup.png', { frameWidth: 48, frameHeight: 48 });
+        this.load.spritesheet('duderight', 'assets/georgeright.png', { frameWidth: 48, frameHeight: 48 });
+        this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 48, frameHeight: 48 });
+       this.load.spritesheet('bolt', 'assets/bolt.png', { frameWidth: 48, frameHeight: 48 });
+       this.load.spritesheet('guard', 'assets/guardbot1/guard-0.png', { frameWidth: 64, frameHeight: 64 });
+       this.load.spritesheet('guardmove', 'assets/guardbot1.png', { frameWidth: 48, frameHeight: 48 });
+       this.load.spritesheet('staticbolt', 'assets/BOLT_0.png', { frameWidth: 48, frameHeight: 48 });
+
+    }
+
+    function create ()
+    {
+        // this.cameras.main.setBounds(0, 0, 1920, 1080);
+        // this.physics.world.setBounds(0, 0, 1920, 1080);
+        const map = this.make.tilemap({ key: 'level1' });
+        let tileset = map.addTilesetImage('wall_sheet','tiles');
+        let tl1 = map.createStaticLayer('Tile Layer 1', tileset);
+        // The player and its settings
+        player = this.physics.add.sprite(500, 500, 'dude');
+        enemy = this.physics.add.sprite(600,500,'guard').setImmovable();
+        this.physics.add.collider(player, tl1);
+        this.physics.add.collider(player,enemy);
+        tl1.setCollisionByProperty({collides:true});
+        tl1.setCollision([36,17]);
+        enemy.setBounce(0);
+        //  Player physics properties. Give the little guy a slight bounce.
+        player.setBounce(0.2);
+        player.setCollideWorldBounds(true);
+        boltappear = this.physics.add.sprite(500, 400, 'staticbolt');
+
+        //enemy
+        this.anims.create({
+            frames: this.anims.generateFrameNumbers('guardmove', { start: 0, end: 2 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        //  Our player animations, turning, walking left and walking right.
+        this.anims.create({
+            key: 'left',
+            frames: this.anims.generateFrameNumbers('dudeleft', { start: 0, end: 2 }),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'up',
+            frames: this.anims.generateFrameNumbers('dudeup', { start: 0, end: 2 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'turn',
+            frames: [ { key: 'dude', frame: 0 } ],
+            frameRate: 20
+        });
+        this.anims.create({
+            key: 'turnup',
+            frames: [ { key: 'dudeup', frame: 0 } ],
+            frameRate: 20
+        });
+        this.anims.create({
+            key: 'right',
+            frames: this.anims.generateFrameNumbers('duderight', { start: 0, end: 2 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'down',
+            frames: this.anims.generateFrameNumbers('dudedown', { start: 0, end: 2 }),
+            frameRate: 10,
+            repeat: -1
+        });
+        this.anims.create({
+            key: 'attack',
+            frames: this.anims.generateFrameNumbers('bolt', { start: 0, end: 4 }),
+            frameRate: 10,
+            repeat: -1
+
+        });
+        cursors = this.input.keyboard.createCursorKeys();
+        keyA = addKey.call(this, 'A');
+
+
+    }
+
+    function update ()
+    {
+
+    if (cursors.left.isDown)
+    {
+        player.setVelocityX(-160);
+
+        player.anims.play('left', true);
+        previouskey = "down"
+    }
+    else if (cursors.right.isDown)
+    {
+        player.setVelocityX(160);
+
+        player.anims.play('right', true);
+    }    
+    else if (cursors.down.isDown)
+    {
+        player.setVelocityY(160);
+        player.anims.play('down', true);
+    }
+    else if (cursors.up.isDown)
+    {
+        player.setVelocityY(-160);
+        player.anims.play('up', true);
+    }
+    else if (keyA.isDown) 
+    {
+
+        boltappear.anims.play('attack',true);
+    } 
+    else
+    {
+        player.setVelocityX(0);
+        player.setVelocityY(0);
+        player.anims.play('turn');
+    }
+
+    // if (cursors.up.isDown && player.body.touching.down)
+    // {
+    //     player.setVelocityY(-330);
+    // }
+        // enemy.anims.play('guardmove',true);
+    }
+    function addKey (code)
+    {
+        var key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes[code]);
+
+        console.log(code, key);
+        console.assert(key);
+
+        return key;
+    }
+</script>
+
+    <div id="info" style='display:none'>
+    </div>
+    <div id="loading" style='display:flex'>
+        <div class="spinner-text">
+            Loading PoseNet model...
+        </div>
+        <div class="sk-spinner sk-spinner-pulse"></div>
+    </div>
+    <div id='main' style='display:none'>
+        <video id="video" playsinline style="display: none;">
+        </video>
+        <canvas id="output" />
+    </div>
+    <button id='calibrate'>Re-Calibrate</button>
+    <div id='motion'>
+    </div>
+</body>
+    <script src="../camera.js"></script>
+</html>
